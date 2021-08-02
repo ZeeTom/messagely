@@ -3,6 +3,7 @@
 const db = require("../db");
 const bcrypt = require("bcrypt");
 const { BCRYPT_WORK_FACTOR } = require("../config");
+const { NotFoundError } = require("../expressError");
 
 /** User of the site. */
 
@@ -12,8 +13,8 @@ class User {
    */
 
   static async register({ username, password, firstName, lastName, phone }) {
-    let hashedPassword = await bcrypt.hash(password, BCRYPT_WORK_FACTOR);
-    let newUser = await db.query(
+    const hashedPassword = await bcrypt.hash(password, BCRYPT_WORK_FACTOR);
+    const newUser = await db.query(
       `INSERT INTO users(username, password, first_name, last_name, phone)
       VALUES ($1, $2, $3, $4, $5)
       RETURNING username, password, first_name AS firstName, last_name AS lastName, phone`,
@@ -26,25 +27,47 @@ class User {
   /** Authenticate: is username/password valid? Returns boolean. */
 
   static async authenticate(username, password) {
-    let result = await db.query(
+    const result = await db.query(
       `SELECT password
        FROM users
        WHERE username = $1`,
       [username]
     );
-    let hashedPassword = result.rows[0].password;
+    const hashedPassword = result.rows[0].password;
     console.log("result on line 35 is", result.rows[0]);
     return bcrypt.compare(password, hashedPassword) === true;
   }
 
   /** Update last_login_at for user */
 
-  static async updateLoginTimestamp(username) {}
+  static async updateLoginTimestamp(username) {
+    const lastLogIn = new Date();
+
+    const result = await db.query(
+      `UPDATE last_login_at=$1
+        FROM users
+        WHERE username=$2
+        RETURNING username`,
+      [lastLogIn, username]
+    );
+
+    if (!result.rows[0]) {
+      throw new NotFoundError(`User ${username} not found.`);
+    };
+  }
 
   /** All: basic info on all users:
    * [{username, first_name, last_name}, ...] */
 
-  static async all() {}
+  static async all() {
+    const result = await db.query(
+      `SELECT username, first_name, last_name, phone
+        FROM users`
+    );
+    const users = result.rows;
+
+    return users;
+  }
 
   /** Get: get user by username
    *
@@ -55,7 +78,21 @@ class User {
    *          join_at,
    *          last_login_at } */
 
-  static async get(username) {}
+  static async get(username) {
+    const result = await db.query(
+      `SELECT username, first_name, last_name, phone
+        FROM users
+        WHERE username=$1`,
+        [username]
+    );
+    const user = result.rows[0];
+
+    if (!user) {
+      throw new NotFoundError(`User ${username} not found.`);
+    }
+    
+    return user;
+  }
 
   /** Return messages from this user.
    *
