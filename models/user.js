@@ -53,7 +53,7 @@ class User {
 
     if (!result.rows[0]) {
       throw new NotFoundError(`User ${username} not found.`);
-    };
+    }
   }
 
   /** All: basic info on all users:
@@ -83,14 +83,14 @@ class User {
       `SELECT username, first_name, last_name, phone
         FROM users
         WHERE username=$1`,
-        [username]
+      [username]
     );
     const user = result.rows[0];
 
     if (!user) {
       throw new NotFoundError(`User ${username} not found.`);
     }
-    
+
     return user;
   }
 
@@ -102,7 +102,39 @@ class User {
    *   {username, first_name, last_name, phone}
    */
 
-  static async messagesFrom(username) {}
+  static async messagesFrom(username) {
+    const result = await db.query(
+      `SELECT m.id,
+       m.body,
+       m.sent_at,
+       m.read_at,
+       to.username,
+       to.first_name,
+       to.last_name,
+       to.phone
+      FROM messages AS m
+      JOIN users
+      ON m.to_username = to.username
+      WHERE m.from_username = $1`,
+      [username]
+    );
+
+    const messages = result.rows.map((m) => {
+      return {
+        id: m.id,
+        to_user: {
+          username: to.username,
+          first_name: to.first_name,
+          last_name: to.last_name,
+          phone: to.phone,
+        },
+        body: m.body,
+        sent_at: m.sent_at,
+        read_at: m.read_at,
+      };
+    });
+    return messages;
+  }
 
   /** Return messages to this user.
    *
