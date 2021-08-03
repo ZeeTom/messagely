@@ -31,13 +31,13 @@ router.post("/register", async function (req, res, next) {
 
   let newUser;
   try {
-    newUser = await User.register(
+    newUser = await User.register({
       username,
       password,
       first_name,
       last_name,
-      phone
-    );
+      phone,
+    });
   } catch {
     throw new BadRequestError();
   }
