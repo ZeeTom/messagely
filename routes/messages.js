@@ -15,6 +15,7 @@ const router = new Router();
  * Makes sure that the currently-logged-in users is either the to or from user.
  *
  **/
+// router.get("/:id", )
 
 
 /** POST / - post message.

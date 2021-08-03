@@ -3,7 +3,7 @@
 const db = require("../db");
 const bcrypt = require("bcrypt");
 const { BCRYPT_WORK_FACTOR } = require("../config");
-const { NotFoundError } = require("../expressError");
+const { NotFoundError, UnauthorizedError } = require("../expressError");
 
 /** User of the site. */
 
@@ -36,7 +36,7 @@ class User {
       [username]
     );
 
-    if (!result.rows[0]) { throw new NotFoundError() };
+    if (!result.rows[0]) { throw new UnauthorizedError("Username or Password incorrect") };
 
     const hashedPassword = result.rows[0].password;
 
@@ -125,6 +125,7 @@ class User {
       WHERE from_username = $1`,
       [username]
     );
+    if (!result.rows[0]) { new NotFoundError(`User ${username} not found.`) };
 
     const messages = result.rows.map((m) => {
       return {
@@ -167,6 +168,9 @@ class User {
       WHERE to_username = $1`,
       [username]
     );
+
+    if (!result.rows[0]) { new NotFoundError(`User ${username} not found.`) };
+
 
     const messages = result.rows.map(m => {
         return {

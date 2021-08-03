@@ -10,10 +10,11 @@ const User = require("../models/user");
 /** POST /login: {username, password} => {token} */
 
 router.post("/login", async function (req, res, next) {
-  const { username, password } = req.body;
+  const { username, password } = req.body;  
+  const isAuthenticated = await User.authenticate(username, password);
 
-  if (await !User.authenticate(username, password)) {
-    throw new UnauthorizedError();
+  if (!isAuthenticated) {
+    throw new UnauthorizedError("Username or Password incorrect");
   }
 
   let token = jwt.sign({ username }, SECRET_KEY);
