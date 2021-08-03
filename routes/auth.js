@@ -10,11 +10,11 @@ const User = require("../models/user");
 /** POST /login: {username, password} => {token} */
 
 router.post("/login", async function (req, res, next) {
-  const { username, password } = req.body;  
+  const { username, password } = req.body;
   const isAuthenticated = await User.authenticate(username, password);
 
   if (!isAuthenticated) {
-    throw new UnauthorizedError("Username or Password incorrect");
+    throw new BadRequestError("Username or Password incorrect");
   }
 
   let token = jwt.sign({ username }, SECRET_KEY);
@@ -45,7 +45,7 @@ router.post("/register", async function (req, res, next) {
 
   let token = jwt.sign({ username: newUser.username }, SECRET_KEY);
 
-  return res.json({ token });
+  return res.status(201).json({ token });
 });
 
 module.exports = router;

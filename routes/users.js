@@ -2,41 +2,35 @@
 
 const Router = require("express").Router;
 const User = require("../models/user");
-const { authenticateJWT, ensureLoggedIn, ensureCorrectUser } = require("../middleware/auth");
+const {
+  authenticateJWT,
+  ensureLoggedIn,
+  ensureCorrectUser,
+} = require("../middleware/auth");
 const router = new Router();
-
 
 /** GET / - get list of users.
  *
  * => {users: [{username, first_name, last_name, phone}, ...]}
  *
  **/
-router.get("/",
-    authenticateJWT,
-    ensureLoggedIn,
-    async function(req, res, next) {
-        const users = await User.all();
+router.get("/", ensureLoggedIn, async function (req, res, next) {
+  const users = await User.all();
 
-        return res.json({ users });
-})
-
-
+  return res.json({ users });
+});
 
 /** GET /:username - get detail of users.
  *
  * => {user: {username, first_name, last_name, phone, join_at, last_login_at}}
  *
  **/
-router.get("/:username",
-    authenticateJWT,
-    ensureCorrectUser,
-    async function(req, res, next) {
-        const username = req.params.username;
-        const user = await User.get(username);
+router.get("/:username", ensureCorrectUser, async function (req, res, next) {
+  const username = req.params.username;
+  const user = await User.get(username);
 
-        return res.json({ user })
-})
-
+  return res.json({ user });
+});
 
 /** GET /:username/to - get messages to user
  *
@@ -47,16 +41,12 @@ router.get("/:username",
  *                 from_user: {username, first_name, last_name, phone}}, ...]}
  *
  **/
-router.get("/:username/to",
-    authenticateJWT,
-    ensureCorrectUser,
-    async function(req, res, next) {
-        const username = req.params.username;
-        const messages = await User.messagesTo(username);
+router.get("/:username/to", ensureCorrectUser, async function (req, res, next) {
+  const username = req.params.username;
+  const messages = await User.messagesTo(username);
 
-        return res.json({ messages });
-})
-
+  return res.json({ messages });
+});
 
 /** GET /:username/from - get messages from user
  *
@@ -67,15 +57,15 @@ router.get("/:username/to",
  *                 to_user: {username, first_name, last_name, phone}}, ...]}
  *
  **/
-router.get("/:username/from",
-    authenticateJWT,
-    ensureCorrectUser,
-    async function(req, res, next) {
-        const username = req.params.username;
-        const messages = await User.messagesFrom(username);
+router.get(
+  "/:username/from",
+  ensureCorrectUser,
+  async function (req, res, next) {
+    const username = req.params.username;
+    const messages = await User.messagesFrom(username);
 
-        return res.json({ messages });
-})
-
+    return res.json({ messages });
+  }
+);
 
 module.exports = router;

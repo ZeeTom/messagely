@@ -3,7 +3,7 @@
 const db = require("../db");
 const bcrypt = require("bcrypt");
 const { BCRYPT_WORK_FACTOR } = require("../config");
-const { NotFoundError, UnauthorizedError } = require("../expressError");
+const { NotFoundError, BadRequestError } = require("../expressError");
 
 /** User of the site. */
 
@@ -20,7 +20,15 @@ class User {
       `INSERT INTO users (username, password, first_name, last_name, phone, join_at, last_login_at)
       VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING username, password, first_name, last_name, phone`,
-      [username, hashedPassword, first_name, last_name, phone, joinAt, lastLogIn]
+      [
+        username,
+        hashedPassword,
+        first_name,
+        last_name,
+        phone,
+        joinAt,
+        lastLogIn,
+      ]
     );
 
     return result.rows[0];
@@ -36,11 +44,13 @@ class User {
       [username]
     );
 
-    if (!result.rows[0]) { throw new UnauthorizedError("Username or Password incorrect") };
+    if (!result.rows[0]) {
+      throw new BadRequestError("Username or Password incorrect");
+    }
 
     const hashedPassword = result.rows[0].password;
 
-    return await bcrypt.compare(password, hashedPassword) === true;
+    return (await bcrypt.compare(password, hashedPassword)) === true;
   }
 
   /** Update last_login_at for user */
@@ -58,7 +68,7 @@ class User {
 
     if (!result.rows[0]) {
       throw new NotFoundError(`User ${username} not found.`);
-    };
+    }
   }
 
   /** All: basic info on all users:
@@ -125,7 +135,9 @@ class User {
       WHERE from_username = $1`,
       [username]
     );
-    if (!result.rows[0]) { new NotFoundError(`User ${username} not found.`) };
+    if (!result.rows[0]) {
+      new NotFoundError(`User ${username} not found.`);
+    }
 
     const messages = result.rows.map((m) => {
       return {
@@ -169,25 +181,25 @@ class User {
       [username]
     );
 
-    if (!result.rows[0]) { new NotFoundError(`User ${username} not found.`) };
+    if (!result.rows[0]) {
+      new NotFoundError(`User ${username} not found.`);
+    }
 
-
-    const messages = result.rows.map(m => {
-        return {
-          id: m.id,
-          from_user: {
-            username: m.username,
-            first_name: m.first_name,
-            last_name: m.last_name,
-            phone: m.phone
-          },
-          body: m.body,
-          sent_at: m.sent_at,
-          read_at: m.read_at
-        };
+    const messages = result.rows.map((m) => {
+      return {
+        id: m.id,
+        from_user: {
+          username: m.username,
+          first_name: m.first_name,
+          last_name: m.last_name,
+          phone: m.phone,
+        },
+        body: m.body,
+        sent_at: m.sent_at,
+        read_at: m.read_at,
+      };
     });
     return messages;
-
   }
 }
 
